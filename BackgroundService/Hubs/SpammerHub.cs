@@ -1,9 +1,7 @@
 ﻿using BackgroundService.Data;
 using BackgroundService.Models;
 using BackgroundService.Services;
-using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.SignalR;
-using Microsoft.EntityFrameworkCore;
 
 namespace BackgroundService.Hubs
 {
@@ -18,23 +16,25 @@ namespace BackgroundService.Hubs
             _dbContext = backgroundServiceContext;
         }
 
-        public async Task SetMessage(string texte)
+        public async Task ClearAllMessages()
         {
-            // On garde ça simple, il ne peut y avoir qu'un seul message dans le système
-            Message? message = await _dbContext.Message.FirstOrDefaultAsync();
-            if (message != null)
-            {
-                message.Texte = texte;
-            }
-            else
-            {
-                Message m = new Message()
-                {
-                    Texte = texte
-                };
-                await _dbContext.AddAsync(m);
-            }
+            _dbContext.RemoveRange(_dbContext.Message);
             await _dbContext.SaveChangesAsync();
+        }
+
+        public async Task AddMessage(string texte)
+        {
+            Message m = new Message()
+            {
+                Texte = texte
+            };
+            await _dbContext.AddAsync(m);
+            await _dbContext.SaveChangesAsync();
+        }
+
+        public async Task ChangeDelay(int delayInSeconds)
+        {
+            _spammer.ChangeDelay(delayInSeconds);
         }
     }
 }

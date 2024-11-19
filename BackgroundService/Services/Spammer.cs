@@ -8,11 +8,12 @@ namespace BackgroundService.Services
 {
     public class Spammer : Microsoft.Extensions.Hosting.BackgroundService
     {
-        public const int DELAY = 30 * 1000;
+        public const int INITIAL_DELAY = 5 * 1000;
         
         private IHubContext<SpammerHub> _spammerHub;
 
         private IServiceScopeFactory _serviceScopeFactory;
+        private int _delay = INITIAL_DELAY;
 
         public Spammer(IHubContext<SpammerHub> spammerHub, IServiceScopeFactory serviceScopeFactory)
         {
@@ -20,18 +21,25 @@ namespace BackgroundService.Services
             _serviceScopeFactory = serviceScopeFactory;
         }
 
-        public async Task EndRound(CancellationToken stoppingToken)
+        public async Task Spam(CancellationToken stoppingToken)
         {
             using (IServiceScope scope = _serviceScopeFactory.CreateScope())
             {
                 BackgroundServiceContext dbContext =
                     scope.ServiceProvider.GetRequiredService<BackgroundServiceContext>();
 
-                // TODO: Mettre à jour et sauvegarder le nbWinds des joueurs
+                List<Message> messages = await dbContext.Message.ToListAsync();
 
-                Message? message = await dbContext.Message.FirstOrDefaultAsync();
+                if(messages.Count > 0)
+                    await _spammerHub.Clients.All.SendAsync("Spam", messages.Select(m => m.Texte), stoppingToken);
+            }
+        }
 
-                await _spammerHub.Clients.All.SendAsync("Spam", message, stoppingToken);
+        public void ChangeDelay(int delayInSeconds)
+        {
+            if(delayInSeconds > 0)
+            {
+                _delay = delayInSeconds * 1000;
             }
         }
 
@@ -40,8 +48,8 @@ namespace BackgroundService.Services
         {
             while (!stoppingToken.IsCancellationRequested)
             {
-                await Task.Delay(DELAY, stoppingToken);
-                await EndRound(stoppingToken);
+                await Task.Delay(_delay, stoppingToken);
+                await Spam(stoppingToken);
             }
         }
     }

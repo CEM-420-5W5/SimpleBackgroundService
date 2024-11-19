@@ -11,13 +11,6 @@ var builder = WebApplication.CreateBuilder(args);
 builder.Services.AddDbContext<BackgroundServiceContext>(options =>
     options.UseSqlServer(builder.Configuration.GetConnectionString("BackgroundServiceContext") ?? throw new InvalidOperationException("Connection string 'BackgroundServiceContext' not found.")));
 
-// Permet d'obtenir des erreurs de BD plus claires et même d'appliquer des migrations manquantes
-builder.Services.AddDatabaseDeveloperPageExceptionFilter();
-
-builder.Services.AddDefaultIdentity<IdentityUser>()
-    .AddEntityFrameworkStores<BackgroundServiceContext>();
-
-// Add services to the container.
 builder.Services.AddControllersWithViews();
 
 builder.Services.AddSingleton<Spammer>();
@@ -31,52 +24,6 @@ builder.Services.AddCors(options =>
         .AllowAnyHeader()
         .AllowCredentials());
 });
-
-string? urls = builder.Configuration["ASPNETCORE_URLS"];
-if (urls != null)
-{
-    string[] serverAdresses = urls.Split(";");
-
-    SymmetricSecurityKey signingKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes("C'est tellement la meilleure cle qui a jamais ete cree dans l'histoire de l'humanite (doit etre longue)"));
-
-    builder.Services.AddAuthentication(options =>
-    {
-        options.DefaultAuthenticateScheme = JwtBearerDefaults.AuthenticationScheme;
-        options.DefaultChallengeScheme = JwtBearerDefaults.AuthenticationScheme;
-        options.DefaultScheme = JwtBearerDefaults.AuthenticationScheme;
-    }).AddJwtBearer(options =>
-    {
-        options.SaveToken = true;
-        // TODO: Seulement lors du developement
-        options.RequireHttpsMetadata = false;
-        options.TokenValidationParameters = new TokenValidationParameters()
-        {
-            ValidateAudience = false,
-            ValidateIssuer = true,
-            ValidIssuers = serverAdresses,
-            ValidAudience = null,
-            IssuerSigningKey = signingKey
-        };
-
-        options.Events = new JwtBearerEvents
-        {
-            OnMessageReceived = context =>
-            {
-                var accessToken = context.Request.Query["access_token"];
-
-                // If the request is for our hub...
-                var path = context.HttpContext.Request.Path;
-                if (!string.IsNullOrEmpty(accessToken) &&
-                    (path.StartsWithSegments("/chat")))
-                {
-                    // Read the token out of the query string
-                    context.Token = accessToken;
-                }
-                return Task.CompletedTask;
-            }
-        };
-    });
-}
 
 builder.Services.AddSignalR();
 
@@ -102,8 +49,7 @@ app.UseAuthorization();
 app.MapControllerRoute(
     name: "default",
     pattern: "{controller=Home}/{action=Index}/{id?}");
-app.MapRazorPages();
 
-app.MapHub<SpammerHub>("/game");
+app.MapHub<SpammerHub>("/spammer");
 
 app.Run();

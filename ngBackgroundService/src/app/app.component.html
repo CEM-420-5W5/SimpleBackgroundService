@@ -1,26 +1,7 @@
-<div style="width:400px" class="container">
-  <form class="borderedZone">
-    <div class="loginZone" *ngIf="!isLoggedIn()">
-      <mat-form-field  style="width: 100%;">
-        <mat-label>Nom d'usager</mat-label>
-        <input matInput type="text" [(ngModel)]="account.username" name="username"/>
-      </mat-form-field>
-    </div>
-    <div class="loginZone" *ngIf="isLoggedIn()">
-      <div style="padding-top: 24px;">Bonjour <b>{{account.username}}!</b></div>
-    </div>
-    <div *ngIf="!isLoggedIn()">
-      <button mat-raised-button color="primary" (click)="register()">Enregistrer</button>
-      <button mat-raised-button color="accent" (click)="login()">Login</button>
-    </div>
-    <div *ngIf="isLoggedIn()">
-      <button mat-raised-button color="accent" (click)="logout()">Logout</button>
-    </div>
-  </form>
-
-  <div class="borderedZone" *ngIf="isLoggedIn()" style="margin-top: 32px; height: 130px">
+<div style="width:600px" class="container">
+  <div class="borderedZone" style="margin-top: 32px; height: 220px">
     <div *ngIf="!isConnected">
-      <div >Pas connecté au Hub..</div>
+      <div >Pas connecté au Hub...</div>
       <br>
       <div>
         <button mat-raised-button color="primary" (click)="connectToHub()">Connecter au Hub</button>
@@ -28,13 +9,23 @@
     </div>
     <div *ngIf="isConnected">
 
-      <div >Connecté! <!-- TODO: Afficher le nb de wins--></div>
-      <br>
-      <div>
-        <button mat-raised-button color="primary" (click)="Increment()">Cliquer</button>
-        Clicks dans ce round: <b>{{nbClicks}}</b>
-      </div>
-      <!-- Permettre d'acheter un multiplier et afficher le multiplier actuel -->
+      <div >Connecté!</div>
+        <br>
+        <button mat-raised-button color="primary" (click)="AddMessage()">Ajouter un message</button>
+        <input [(ngModel)]="texte" type="text" style="width:300px; height: 28px;"/>
+        <button mat-raised-button color="accent" (click)="ClearAllMessages()">Effacer tout les messages</button>
+        <div>
+          <button mat-raised-button color="primary" (click)="ChangeDelay()">Modifier le délai (secondes)</button>
+          <input [(ngModel)]="delayInSeconds" type="number" style="width:40px; height: 28px;"/>
+        </div>
+        
+        
+        <p style="margin:16px;color:red;">Il faut regarder dans la console pour voir les messages!!!</p>
     </div>
+
+    
   </div>
+  <p style="margin:16px">Cette petite application permet d'envoyer un texte au serveur qui sera ensuite envoyé régulièrement à tout les clients. On peut également changer le délai entre chaque envoi vers les clients. Il faut ouvrir plusieurs clients et regarder les consoles pour bien comprendre comment ça fonctionne! Note: Les messages sont sauvegardés dans la BD, mais pas le délai.</p>
+  <p style="margin:16px"><b>Note:</b> Il faut attendre la fin du délai actuel avant que le nouveau délai s'applique.</p>
+  <p style="margin:16px"><b>Note:</b> Les messages sont sauvegardés dans la BD, mais pas le délai.</p>
 </div>
